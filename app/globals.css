@@ -1,26 +1,345 @@
 @import "tailwindcss";
 
+
+@import "tailwindcss";
+
+/* ========================================
+   1. GLOBAL DESIGN VARIABLES
+   ======================================== */
+
 :root {
+  color-scheme: light;
+
+  /* Brand colors */
+  --brand: #2563eb;
+  --brand-hover: #1d4ed8;
+  --brand-active: #1e40af;
+  --brand-soft: #eff6ff;
+  --brand-border: #bfdbfe;
+  --on-brand: #ffffff;
+
+  /* Backgrounds */
   --background: #ffffff;
-  --foreground: #171717;
+  --background-subtle: #f7f8fa;
+  --background-muted: #eef1f5;
+  --surface: #ffffff;
+  --surface-hover: #f3f6fa;
+  --surface-elevated: #ffffff;
+
+  /* Text */
+  --heading: #111827;
+  --text: #374151;
+  --text-muted: #6b7280;
+  --text-subtle: #9ca3af;
+  --text-inverse: #ffffff;
+
+  /* Borders */
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --border-focus: #2563eb;
+
+  /* Status colors */
+  --success: #15803d;
+  --warning: #b45309;
+  --error: #dc2626;
+
+  /* Typography */
+  --font-heading: var(--font-barlow);
+  --font-body: var(--font-dm-sans);
+
+  --text-hero: clamp(2.75rem, 6vw, 5.5rem);
+  --text-display: clamp(2.5rem, 5vw, 4.5rem);
+  --text-section: clamp(2rem, 4vw, 3.25rem);
+  --text-subheading: clamp(1.5rem, 2.5vw, 2.25rem);
+  --text-card: clamp(1.25rem, 2vw, 1.75rem);
+  --text-body: 1rem;
+  --text-small: 0.875rem;
+  --text-caption: 0.75rem;
+
+  --leading-hero: 0.98;
+  --leading-heading: 1.1;
+  --leading-subheading: 1.2;
+  --leading-body: 1.7;
+
+  /* Layout */
+  --container-width: 1280px;
+  --container-padding: clamp(1.25rem, 4vw, 3rem);
+  --section-spacing: clamp(4rem, 8vw, 7rem);
+  --section-spacing-sm: clamp(3rem, 5vw, 4.5rem);
+
+  /* Shape */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgb(17 24 39 / 5%);
+  --shadow-card-hover: 0 12px 32px rgb(17 24 39 / 10%);
+  --shadow-dropdown: 0 16px 40px rgb(17 24 39 / 12%);
+  --shadow-focus: 0 0 0 3px rgb(37 99 235 / 25%);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
+
+/* ========================================
+   2. CONNECT VARIABLES TO TAILWIND
+   ======================================== */
 
 @theme inline {
+  /* Fonts */
+  --font-sans: var(--font-dm-sans);
+  --font-heading: var(--font-barlow);
+
+  /* Colors: enables bg-brand, text-heading, etc. */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-border: var(--brand-border);
+  --color-on-brand: var(--on-brand);
+
   --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background-subtle: var(--background-subtle);
+  --color-background-muted: var(--background-muted);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-elevated: var(--surface-elevated);
+
+  --color-heading: var(--heading);
+  --color-body: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-inverse: var(--text-inverse);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-focus: var(--border-focus);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+
+  /* Typography utilities */
+  --text-hero: var(--text-hero);
+  --text-display: var(--text-display);
+  --text-section: var(--text-section);
+  --text-subheading: var(--text-subheading);
+  --text-card: var(--text-card);
+  --text-body: var(--text-body);
+  --text-small: var(--text-small);
+  --text-caption: var(--text-caption);
+
+  /* Spacing utility */
+  --spacing-section: var(--section-spacing);
+  --spacing-section-sm: var(--section-spacing-sm);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ========================================
+   3. BASE RESET
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+  background: var(--background);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--text);
+  font-family: var(--font-body), sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ========================================
+   4. TYPOGRAPHY
+   ======================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  color: var(--heading);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  line-height: var(--leading-heading);
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-size: var(--text-display);
+  font-weight: 800;
+}
+
+h2 {
+  font-size: var(--text-section);
+  font-weight: 700;
+}
+
+h3 {
+  font-size: var(--text-subheading);
+  font-weight: 700;
+}
+
+h4 {
+  font-size: var(--text-card);
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+::selection {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+/* ========================================
+   5. ACCESSIBILITY
+   ======================================== */
+
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================
+   6. REUSABLE GLOBAL UTILITIES
+   ======================================== */
+
+.container-site {
+  width: 100%;
+  max-width: var(--container-width);
+  margin-inline: auto;
+  padding-inline: var(--container-padding);
+}
+
+.section-padding {
+  padding-block: var(--section-spacing);
+}
+
+.section-padding-sm {
+  padding-block: var(--section-spacing-sm);
+}
+
+.heading-display {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-display);
+  font-weight: 800;
+  line-height: var(--leading-hero);
+  letter-spacing: -0.035em;
+}
+
+.heading-section {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: var(--leading-heading);
+  letter-spacing: -0.025em;
+}
+
+.text-body-muted {
+  color: var(--text-muted);
+}
+
+.surface-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  transition:
+    box-shadow var(--duration-normal) var(--ease-standard),
+    border-color var(--duration-normal) var(--ease-standard),
+    transform var(--duration-normal) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .surface-card:hover {
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+/* ========================================
+   7. REDUCED MOTION
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes page-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    animation: page-content-enter 420ms cubic-bezier(0.2, 0, 0, 1) both;
+  }
 }
