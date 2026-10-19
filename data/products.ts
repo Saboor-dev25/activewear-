@@ -2,8 +2,11 @@ import { StaticImageData } from "next/image";
 import Demoimage from "@/public/images/perform.png";
 
 export type Product = {
+  id?: string;
   slug: string;
   categorySlug: string;
+  /** Optional nested collection; categorySlug remains the top-level category. */
+  subcategorySlug?: string;
   name: string;
   description: string;
   image: string | StaticImageData;
@@ -15,7 +18,8 @@ export type Product = {
 
 export const products: Product[] = [
   { slug: "custom-training-tee", 
-    categorySlug: "performance-wear", 
+    categorySlug: "performance-wear",
+    subcategorySlug: "training-tops",
     name: "Custom Training Tee", 
     description: "A lightweight customizable training top designed for repeat sessions, team colors, and all-day comfort.", 
     image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1000&q=85", 
@@ -25,7 +29,8 @@ export const products: Product[] = [
     features: ["Full-color team artwork", "Lightweight moisture management", "Multiple fit options"]
    },
   { slug: "custom-performance-leggings", 
-    categorySlug: "performance-wear", 
+    categorySlug: "performance-wear",
+    subcategorySlug: "performance-leggings",
     name: "Custom Performance Leggings", 
     description: "Supportive custom leggings made for training, movement, and a coordinated team look.", 
     image: "https://images.unsplash.com/photo-1506629905607-d9f8a3bde39b?auto=format&fit=crop&w=1000&q=85",
@@ -37,6 +42,7 @@ export const products: Product[] = [
 
      { slug: "Demo-product", 
     categorySlug: "demo", 
+     subcategorySlug: "demo-subcategory",
     name: "Demo Product", 
     description: "this products is being added in demo category for testing.", 
     image: Demoimage,

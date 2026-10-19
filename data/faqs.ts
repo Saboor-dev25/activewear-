@@ -1,4 +1,4 @@
-export type FAQ = { question: string; answer: string };
+export type FAQ = { id?: string; question: string; answer: string };
 
 export const faqs: FAQ[] = [
   { question: "What is the minimum order quantity?", answer: "Minimum quantities depend on the garment and customization. Share your brief and we will confirm the best option for your group." },

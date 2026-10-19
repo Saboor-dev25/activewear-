@@ -1,4 +1,4 @@
-export type Testimonial = { quote: string; name: string; company: string };
+export type Testimonial = { id?: string; quote: string; name: string; company: string };
 
 export const testimonials: Testimonial[] = [
   { quote: "The team made our custom order straightforward, from our first idea to the finished kit.", name: "Jordan Lee", company: "Northside Athletics" },

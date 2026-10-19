@@ -3,12 +3,35 @@ import Banner from "@/public/images/banner.png";
 import { StaticImageData } from "next/image"; // Optional, but good for typing
 
 export type Category = {
+  id?: string;
   slug: string;
   name: string;
   description: string;
   image: string | StaticImageData; // Allow either a URL string or a static import
   eyebrow: string;
+  /** Nested collections use their parent's slug in Product.categorySlug for compatibility. */
+  subcategories?: Category[];
 };
+
+export function getAllCategories(items: Category[] = categories): Category[] {
+  return items.flatMap((category) => [category, ...getAllCategories(category.subcategories ?? [])]);
+}
+
+export function findCategoryBySlug(slug: string, items: Category[] = categories): Category | undefined {
+  return getAllCategories(items).find((category) => category.slug === slug);
+}
+
+export function findCategoryParent(slug: string, items: Category[] = categories): Category | undefined {
+  function findParent(items: Category[]): Category | undefined {
+    for (const category of items) {
+      if (category.subcategories?.some((subcategory) => subcategory.slug === slug)) return category;
+      const nestedParent = findParent(category.subcategories ?? []);
+      if (nestedParent) return nestedParent;
+    }
+    return undefined;
+  }
+  return findParent(items);
+}
 
 export const categories: Category[] = [
   { 
@@ -16,7 +39,11 @@ export const categories: Category[] = [
     name: "Performance Wear", 
     description: "Custom training apparel made to move with your team.", 
     image: PerformanceWearImage, // Pass the imported variable directly (no quotes)
-    eyebrow: "Move with purpose" 
+    eyebrow: "Move with purpose",
+    subcategories: [
+      { id: "subcategory-training-tops", slug: "training-tops", name: "Training Tops", description: "Lightweight custom tops for every training session.", image: PerformanceWearImage, eyebrow: "Ready for every rep" },
+      { id: "subcategory-performance-leggings", slug: "performance-leggings", name: "Performance Leggings", description: "Flexible custom leggings built for movement.", image: "/images/legs.jpg", eyebrow: "Move without limits" },
+    ],
   },
 
   { 
@@ -32,6 +59,15 @@ export const categories: Category[] = [
     name: "Demo Category added", 
     description: " This is a demo category for testing purposes. And products in these categories are demo products.", 
     image: Banner, 
-    eyebrow: "Hope the site works" 
+    eyebrow: "Hope the site works" ,
+    subcategories: [
+    {
+  slug: "demo-subcategory",
+  name: "Demo Subcategory",
+  description: "A demo subcategory for testing purposes.",
+  image: "/images/perform.png",
+  eyebrow: "Testing the waters"
+}
+    ]
   },
 ];

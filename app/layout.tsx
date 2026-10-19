@@ -2,9 +2,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Barlow_Condensed, DM_Sans } from "next/font/google";
-import { Footer } from "@/components/layout/Footer";
-import { Navbar } from "@/components/layout/Navbar";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { QuoteProvider } from "@/components/quote/QuoteModal";
+import { ContentProvider } from "@/components/providers/ContentProvider";
 import "./globals.css";
 
 const barlow = Barlow_Condensed({
@@ -35,11 +35,11 @@ export default function RootLayout({
     <html lang="en" className={`${barlow.variable} ${dmSans.variable}`}>
       <body>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-white focus:px-4 focus:py-3 focus:text-heading">Skip to content</a>
-        <QuoteProvider>
-          <Navbar />
-          {children}
-          <Footer />
-        </QuoteProvider>
+        <ContentProvider>
+          <QuoteProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </QuoteProvider>
+        </ContentProvider>
       </body>
     </html>
   );

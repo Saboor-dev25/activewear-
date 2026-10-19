@@ -1,0 +1,13 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/_global-error/page": "/_global-error",
+  "/favicon.ico/route": "/favicon.ico",
+  "/about/page": "/about",
+  "/admin/page": "/admin",
+  "/categories/[slug]/page": "/categories/[slug]",
+  "/categories/page": "/categories",
+  "/contact/page": "/contact",
+  "/gallery/page": "/gallery",
+  "/page": "/",
+  "/products/[slug]/page": "/products/[slug]"
+}

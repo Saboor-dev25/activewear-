@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, type FocusEvent } from "react";
-import { testimonials } from "@/data/testimonials";
+import { useContent } from "@/components/providers/ContentProvider";
 
 export function Testimonials() {
+  const { content } = useContent();
+  const testimonials = content.testimonials;
   const [active, setActive] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
@@ -18,7 +20,7 @@ export function Testimonials() {
     }, 6000);
 
     return () => window.clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, testimonials.length]);
 
   function handleBlur(event: FocusEvent<HTMLElement>) {
     if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
@@ -33,6 +35,11 @@ export function Testimonials() {
   function showNext() {
     setActive((current) => (current + 1) % testimonials.length);
   }
+
+  if (testimonials.length === 0) {
+    return <section aria-labelledby="testimonials-title" className="section-padding"><div className="container-site"><h2 id="testimonials-title" className="heading-section">Teams that feel the difference</h2><p className="mt-3 text-muted">Customer stories will appear here.</p></div></section>;
+  }
+  const displayActive = active % testimonials.length;
 
   return (
     <section
@@ -55,10 +62,10 @@ export function Testimonials() {
         <div className="overflow-hidden rounded-2xl" aria-live={isPaused ? "polite" : "off"}>
           <div
             className="flex transition-transform duration-500 ease-in-out motion-reduce:transition-none"
-            style={{ transform: `translateX(-${active * 100}%)` }}
+            style={{ transform: `translateX(-${displayActive * 100}%)` }}
           >
             {testimonials.map((testimonial) => (
-              <figure key={testimonial.name} aria-roledescription="slide" className="surface-card w-full shrink-0 p-6 sm:p-8">
+              <figure key={testimonial.id ?? testimonial.name} aria-roledescription="slide" className="surface-card w-full shrink-0 p-6 sm:p-8">
                 <div aria-label="5 out of 5 stars" className="mb-4 tracking-widest text-brand">★★★★★</div>
                 <blockquote className="text-lg font-medium leading-relaxed text-heading">“{testimonial.quote}”</blockquote>
                 <figcaption className="mt-6 border-t border-border pt-4">
@@ -71,7 +78,7 @@ export function Testimonials() {
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-4">
-          <p className="text-sm text-muted" aria-live="polite">{active + 1} of {testimonials.length}</p>
+          <p className="text-sm text-muted" aria-live="polite">{displayActive + 1} of {testimonials.length}</p>
           <div className="flex items-center gap-2">
             <button type="button" onClick={showPrevious} aria-label="Previous testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-white text-heading transition hover:border-brand hover:text-brand motion-reduce:transition-none">←</button>
             <button type="button" onClick={showNext} aria-label="Next testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-white text-heading transition hover:border-brand hover:text-brand motion-reduce:transition-none">→</button>

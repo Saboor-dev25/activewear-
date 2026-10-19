@@ -12,6 +12,7 @@ export function CategoryCard({ category }: { category: Category }) {
       <p style={{ color: "#FFFFFF" }} className="mb-2 text-xs font-bold uppercase tracking-[0.16em] drop-shadow-sm">{category.eyebrow}</p>
       <h3 style={{ color: "#FFFFFF" }} className="font-heading text-3xl font-bold drop-shadow-sm">{category.name}</h3>
       <p style={{ color: "#E5E7EB" }} className="mt-2 max-w-lg drop-shadow-sm">{category.description}</p>
+      {category.subcategories?.length ? <ul className="mt-4 flex flex-wrap gap-2" aria-label={`${category.name} subcategories`}>{category.subcategories.map((subcategory) => <li key={subcategory.slug}><Link href={`/categories/${subcategory.slug}`} className="inline-flex rounded-full border border-white/50 bg-white/10 px-3 py-1 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20">{subcategory.name}</Link></li>)}</ul> : null}
       <Link style={{ color: "#FFFFFF" }} className="mt-5 inline-flex w-fit items-center gap-2 font-bold underline decoration-white/80 underline-offset-4 drop-shadow-sm hover:decoration-white" href={`/categories/${category.slug}`} aria-label={`Explore ${category.name}`}>Explore category <span aria-hidden="true">→</span></Link>
     </div>
   </article>;
