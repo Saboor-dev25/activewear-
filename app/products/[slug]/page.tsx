@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { QuoteTrigger } from "@/components/quote/QuoteTrigger";
 import { useContent } from "@/components/providers/ContentProvider";
-import { findCategoryBySlug, findCategoryParent } from "@/data/categories";
+import { findCategoryBySlug, findCategoryParent } from "@/backend/data/categories";
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,9 +25,20 @@ export default function ProductPage() {
   const parent = product.subcategorySlug
     ? findCategoryParent(product.subcategorySlug, content.categories)
     : undefined;
+  const productImage = typeof product.image === "string" ? product.image : product.image.src;
 
   return (
     <main id="main-content" className="container-site py-10 sm:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.name,
+        description: product.description,
+        image: productImage,
+        sku: product.slug,
+        category: category?.name,
+        brand: { "@type": "Brand", name: "Activewear Custom" },
+      }).replace(/</g, "\\u003c") }} />
       <nav aria-label="Breadcrumb" className="mb-8 text-sm text-muted">
         <Link href="/categories" className="hover:text-brand">Categories</Link>
         {parent && <>
@@ -43,15 +54,14 @@ export default function ProductPage() {
       </nav>
 
       <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-background-muted">
+        <div className="group relative aspect-[4/3] overflow-hidden rounded-2xl bg-background-muted">
           <Image
             src={product.image}
             alt={product.name}
             fill
             priority
-            unoptimized
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-500 group-hover:scale-105 group-active:scale-105 motion-reduce:transition-none"
           />
         </div>
         <div>
@@ -60,7 +70,7 @@ export default function ProductPage() {
           <p className="mt-5 text-lg text-muted">{product.description}</p>
 
           <div className="mt-8">
-            <h2 className="font-heading text-2xl font-bold">Made for your team</h2>
+            {/* <h2 className="font-heading text-2xl font-bold">Made for your team</h2> */}
             <p className="mt-2 text-muted">{product.materials}</p>
             <ul className="mt-4 grid gap-2">
               {product.features.map((feature) => (
@@ -76,7 +86,7 @@ export default function ProductPage() {
             <h3 className="font-heading text-lg font-bold">Available sizes</h3>
             <ul className="mt-2 flex flex-wrap gap-2">
               {product.sizes.map((size) => (
-                <li key={size} className="rounded border border-border px-3 py-1.5 text-sm">{size}</li>
+                <li key={size} className="rounded border border-border px-3 py-1.5 text-sm transition-colors hover:border-brand hover:bg-brand-soft">{size}</li>
               ))}
             </ul>
           </div>

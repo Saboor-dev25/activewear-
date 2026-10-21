@@ -1,8 +1,7 @@
 "use client";
 
 import { useSyncExternalStore, type ReactNode } from "react";
-import { demoContent, type ContentData } from "@/data/content";
-import { CONTENT_STORAGE_KEY, parseStoredContent, serializeContent } from "@/lib/contentStore";
+import { demoContent, type ContentData } from "@/backend/data/content";
 
 export type ContentContextValue = {
   content: ContentData;
@@ -10,6 +9,7 @@ export type ContentContextValue = {
   storageError: string | null;
   saveContent: (next: ContentData) => void;
   restoreDemoContent: () => void;
+  refreshContent: () => Promise<void>;
 };
 
 const initialSnapshot: ContentContextValue = {
@@ -18,10 +18,12 @@ const initialSnapshot: ContentContextValue = {
   storageError: null,
   saveContent,
   restoreDemoContent,
+  refreshContent,
 };
 
 let snapshot = initialSnapshot;
 let initialized = false;
+let pendingWrite = Promise.resolve();
 const listeners = new Set<() => void>();
 
 function publish(next: ContentContextValue) {
@@ -29,26 +31,25 @@ function publish(next: ContentContextValue) {
   listeners.forEach((listener) => listener());
 }
 
+export async function refreshContent() {
+  try {
+    const response = await fetch("/api/content", { cache: "no-store" });
+    const payload = await response.json() as { content?: ContentData; error?: string };
+    if (!response.ok || !payload.content) throw new Error(payload.error ?? "Unable to load website content.");
+    publish({ ...snapshot, content: payload.content, hydrated: true, storageError: null });
+  } catch (error) {
+    publish({
+      ...snapshot,
+      hydrated: true,
+      storageError: error instanceof Error ? error.message : "Unable to load website content.",
+    });
+  }
+}
+
 function initializeStore() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  let content = demoContent;
-  let storageError: string | null = null;
-
-  try {
-    const saved = window.localStorage.getItem(CONTENT_STORAGE_KEY);
-    if (saved === null) {
-      window.localStorage.setItem(CONTENT_STORAGE_KEY, serializeContent(demoContent));
-    } else {
-      content = parseStoredContent(saved);
-    }
-  } catch (error) {
-    storageError = error instanceof Error
-      ? error.message
-      : "Unable to read saved content from this browser.";
-  }
-
-  publish({ ...snapshot, content, hydrated: true, storageError });
+  void refreshContent();
 }
 
 function subscribe(listener: () => void) {
@@ -58,12 +59,22 @@ function subscribe(listener: () => void) {
 }
 
 function saveContent(next: ContentData) {
-  try {
-    window.localStorage.setItem(CONTENT_STORAGE_KEY, serializeContent(next));
-    publish({ ...snapshot, content: next, hydrated: true, storageError: null });
-  } catch {
-    publish({ ...snapshot, storageError: "Changes could not be saved. Check available browser storage." });
-  }
+  publish({ ...snapshot, content: next, hydrated: true, storageError: null });
+  pendingWrite = pendingWrite.then(async () => {
+    const response = await fetch("/api/content", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(snapshot.content),
+    });
+    const payload = await response.json() as { content?: ContentData; error?: string };
+    if (!response.ok || !payload.content) throw new Error(payload.error ?? "Changes could not be saved.");
+    publish({ ...snapshot, content: payload.content, hydrated: true, storageError: null });
+  }).catch((error: unknown) => {
+    publish({
+      ...snapshot,
+      storageError: error instanceof Error ? error.message : "Changes could not be saved.",
+    });
+  });
 }
 
 function restoreDemoContent() {

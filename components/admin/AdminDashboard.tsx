@@ -1,25 +1,30 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Category } from "@/data/categories";
-import type { FAQ } from "@/data/faqs";
-import type { Product } from "@/data/products";
-import type { Testimonial } from "@/data/testimonials";
-import { makeStableId, type Company, type ContentData } from "@/data/content";
+import type { Category } from "@/backend/data/categories";
+import type { FAQ } from "@/backend/data/faqs";
+import type { Product } from "@/backend/data/products";
+import type { Testimonial } from "@/backend/data/testimonials";
+import { makeStableId, type Company, type ContentData } from "@/backend/data/content";
 import { useContent } from "@/components/providers/ContentProvider";
+import { demoContent } from "@/backend/data/content";
 
-type Section = "categories" | "products" | "companies" | "testimonials" | "faqs";
+type ContentSection = keyof ContentData;
+type Section = ContentSection | "subcategories" | "adminUsers";
 type CategoryEntry = { category: Category; parent?: Category };
 type ConfirmAction = { title: string; description: string; run: () => void };
+type AdminUser = { id: string; email: string; createdAt: string };
 
 const sectionNames: Record<Section, string> = {
   categories: "Categories",
+  subcategories: "Subcategories",
   products: "Products",
   companies: "Companies",
   testimonials: "Testimonials",
   faqs: "FAQs",
+  adminUsers: "Admin users",
 };
 
 const inputClass = "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-heading outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
@@ -34,7 +39,18 @@ function flattenCategories(items: Category[], parent?: Category): CategoryEntry[
 }
 
 function imageSource(image: Category["image"] | Product["image"]): string {
-  return typeof image === "string" ? image : image.src;
+  let source = (typeof image === "string" ? image : image?.src)?.trim().replaceAll("\\", "/");
+  if (!source || source.startsWith("//")) return "";
+  if (source.startsWith("/public/")) source = source.slice("/public".length);
+  else if (source.startsWith("public/")) source = `/${source.slice("public/".length)}`;
+  if (source.startsWith("/")) return source;
+  if (!/^[a-z][a-z\d+.-]*:/i.test(source)) return `/${source}`;
+  try {
+    const parsed = new URL(source);
+    return parsed.protocol === "https:" ? source : "";
+  } catch {
+    return "";
+  }
 }
 
 function replaceCategory(items: Category[], id: string, next: Category): Category[] {
@@ -77,13 +93,45 @@ function TextField({ label, value, onChange, placeholder, required = true }: {
   );
 }
 
-function TextAreaField({ label, value, onChange, rows = 3 }: {
+function TextAreaField({ label, value, onChange, rows = 3 , required = false }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   rows?: number;
+  required?: boolean;
 }) {
-  return <Field label={label}><textarea className={inputClass} value={value} onChange={(event) => onChange(event.target.value)} rows={rows} required /></Field>;
+  return <Field label={label}><textarea className={inputClass} value={value} onChange={(event) => onChange(event.target.value)} rows={rows} required={required} /></Field>;
+}
+
+function ImageUploadField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  return <Field label="Upload image instead">
+    <input
+      className={inputClass}
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/avif"
+      disabled={uploading}
+      onChange={async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setUploading(true); setError("");
+        try {
+          const body = new FormData(); body.set("file", file);
+          const response = await fetch("/api/admin/upload", { method: "POST", body });
+          const result = await response.json() as { url?: string; error?: string };
+          if (!response.ok || !result.url) throw new Error(result.error ?? "Image upload failed.");
+          onChange(result.url);
+        } catch (uploadError) {
+          setError(uploadError instanceof Error ? uploadError.message : "Image upload failed.");
+        } finally {
+          setUploading(false); event.target.value = "";
+        }
+      }}
+    />
+    <span className="text-xs text-muted">{uploading ? "Uploading and optimizing…" : value.startsWith("https://res.cloudinary.com/") ? "Cloudinary image ready" : "Uploading replaces the URL above. JPEG, PNG, WebP, or AVIF up to 4 MiB (4,194,304 bytes)."}</span>
+    {error && <span role="alert" className="text-xs text-error">{error}</span>}
+  </Field>;
 }
 
 function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: () => void }) {
@@ -114,9 +162,47 @@ function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: 
 }
 
 export function AdminDashboard() {
-  const { content, saveContent, restoreDemoContent, storageError, hydrated } = useContent();
+  const { content, saveContent, restoreDemoContent, storageError, hydrated, refreshContent } = useContent();
+  const [admin, setAdmin] = useState<AdminUser | null>(null);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [migrationMessage, setMigrationMessage] = useState("");
   const [section, setSection] = useState<Section>("categories");
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
+
+  const finishLogin = useCallback(async (nextAdmin: AdminUser) => {
+    setAdmin(nextAdmin);
+    setMigrationMessage("");
+    try {
+      const legacy = window.localStorage.getItem("activewear-content-v1");
+      const response = await fetch("/api/content/migrate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ legacy, demo: demoContent }),
+      });
+      const result = await response.json() as { result?: string; error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to import saved browser content.");
+      if (result.result === "migrated" && legacy !== null) window.localStorage.removeItem("activewear-content-v1");
+      if (result.result === "already-initialized" && legacy !== null) {
+        setMigrationMessage("The shared site already has content. This browser’s saved copy was left in place and was not imported.");
+      }
+    } catch (migrationError) {
+      setMigrationMessage(migrationError instanceof Error ? migrationError.message : "Could not migrate browser content.");
+    }
+    await refreshContent();
+  }, [refreshContent]);
+
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(async (response) => response.ok ? response.json() as Promise<{ admin: AdminUser | null }> : { admin: null })
+      .then(({ admin: current }) => {
+        if (current) void finishLogin(current);
+      })
+      .catch(() => setAdmin(null))
+      .finally(() => setCheckingAuth(false));
+  }, [finishLogin]);
+
+  if (checkingAuth) return <main className="mx-auto max-w-lg px-4 py-16"><p className="text-sm text-muted">Checking admin session…</p></main>;
+  if (!admin) return <AdminLogin onLogin={finishLogin} />;
 
   return <main id="main-content" className="min-h-screen bg-background-subtle">
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8">
@@ -127,6 +213,8 @@ export function AdminDashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link href="/" className={secondaryButtonClass}>View website ↗</Link>
+          <span className="hidden text-sm text-muted sm:inline">{admin.email}</span>
+          <button type="button" className={secondaryButtonClass} onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); setAdmin(null); }}>Sign out</button>
           <button
             type="button"
             className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-error hover:bg-red-50"
@@ -141,6 +229,7 @@ export function AdminDashboard() {
         </div>
       </header>
       {storageError && <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-error">{storageError}</div>}
+      {migrationMessage && <div role="status" className="mb-5 rounded-lg border border-brand-border bg-brand-soft px-4 py-3 text-sm text-heading">{migrationMessage}</div>}
       {!hydrated && <div className="mb-5 rounded-lg border border-brand-border bg-brand-soft px-4 py-3 text-sm text-heading">Loading saved content…</div>}
       <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-border bg-white p-3 shadow-sm lg:sticky lg:top-5 lg:h-fit">
@@ -153,18 +242,20 @@ export function AdminDashboard() {
                 className={`whitespace-nowrap rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition ${section === key ? "bg-brand-soft text-brand" : "text-muted hover:bg-background-subtle hover:text-heading"}`}
               >
                 {sectionNames[key]}
-                <span className="float-right ml-4 text-xs opacity-70">{content[key].length}</span>
+                <span className="float-right ml-4 text-xs opacity-70">{key === "subcategories" ? content.categories.reduce((count, item) => count + (item.subcategories?.length ?? 0), 0) : key === "adminUsers" ? "" : content[key].length}</span>
               </button>
             ))}
           </nav>
-          <div className="mt-4 hidden rounded-xl bg-background-subtle p-3 text-xs leading-relaxed text-muted lg:block">Changes are saved in this browser and appear on the public site immediately.</div>
+          <div className="mt-4 hidden rounded-xl bg-background-subtle p-3 text-xs leading-relaxed text-muted lg:block">Changes are saved securely to the shared site content.</div>
         </aside>
         <section className="min-w-0 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6">
           {section === "categories" && <CategoryManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
+          {section === "subcategories" && <CategoryManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} subcategoriesOnly />}
           {section === "products" && <ProductManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
           {section === "companies" && <SimpleManager kind="companies" content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
           {section === "testimonials" && <SimpleManager kind="testimonials" content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
           {section === "faqs" && <SimpleManager kind="faqs" content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
+          {section === "adminUsers" && <AdminUserManager currentAdmin={admin} requestConfirm={setConfirmAction} />}
         </section>
       </div>
     </div>
@@ -172,12 +263,16 @@ export function AdminDashboard() {
   </main>;
 }
 
-function CategoryManager({ content, saveContent, requestConfirm }: {
+function CategoryManager({ content, saveContent, requestConfirm, subcategoriesOnly = false }: {
   content: ContentData;
   saveContent: (next: ContentData) => void;
   requestConfirm: (action: ConfirmAction) => void;
+  subcategoriesOnly?: boolean;
 }) {
-  const entries = useMemo(() => flattenCategories(content.categories), [content.categories]);
+  const allEntries = useMemo(() => flattenCategories(content.categories), [content.categories]);
+  const entries = useMemo(() => {
+    return subcategoriesOnly ? allEntries.filter((entry) => Boolean(entry.parent)) : allEntries.filter((entry) => !entry.parent);
+  }, [allEntries, subcategoriesOnly]);
   const [editId, setEditId] = useState<string | null>(null);
   const [parentSlug, setParentSlug] = useState("");
   const [name, setName] = useState("");
@@ -201,7 +296,8 @@ function CategoryManager({ content, saveContent, requestConfirm }: {
     event.preventDefault();
     const normalizedSlug = slug.trim().toLowerCase();
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) { setError("Use lowercase letters, numbers, and hyphens for the slug."); return; }
-    if (entries.some(({ category }) => category.slug === normalizedSlug && category.id !== editId)) { setError("That category slug is already in use."); return; }
+    if (subcategoriesOnly && !parentSlug) { setError("Choose the parent category for this subcategory."); return; }
+    if (allEntries.some(({ category }) => category.slug === normalizedSlug && category.id !== editId)) { setError("That category slug is already in use."); return; }
     const editingEntry = entries.find(({ category }) => category.id === editId);
     if (editingEntry && !editingEntry.parent && parentSlug) { setError("Top-level categories cannot be moved under another category while editing."); return; }
     const id = editId ?? makeStableId(parentSlug ? "subcategory" : "category");
@@ -209,7 +305,7 @@ function CategoryManager({ content, saveContent, requestConfirm }: {
     let nextCategories = content.categories;
     if (editId) {
       nextCategories = replaceCategory(nextCategories, editId, nextCategory);
-      if (editingEntry && editingEntry.parent?.slug !== parentSlug) {
+      if (editingEntry && (editingEntry.parent?.slug ?? "") !== parentSlug) {
         nextCategories = removeCategory(nextCategories, editId);
         nextCategories = nextCategories.map((root) => root.slug === parentSlug
           ? { ...root, subcategories: [...(root.subcategories ?? []), nextCategory] }
@@ -250,14 +346,14 @@ function CategoryManager({ content, saveContent, requestConfirm }: {
   }
 
   return <div>
-    <SectionHeading title="Categories & subcategories" description="Organize collections and keep product relationships intact." />
+    <SectionHeading title={subcategoriesOnly ? "Subcategories" : "Categories"} description={subcategoriesOnly ? "Manage nested collections and their product relationships." : "Organize top-level collections and keep product relationships intact."} />
     <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="grid content-start gap-3">
         {entries.map((entry) => (
           <article key={entry.category.id ?? entry.category.slug} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-background-muted">
-                <Image src={imageSource(entry.category.image)} alt="" fill unoptimized className="object-cover" />
+                {imageSource(entry.category.image) && <Image src={imageSource(entry.category.image)} alt="" fill className="object-cover" />}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-heading">
@@ -283,6 +379,7 @@ function CategoryManager({ content, saveContent, requestConfirm }: {
             value={parentSlug}
             onChange={(event) => setParentSlug(event.target.value)}
             disabled={Boolean(editId && !entries.find(({ category }) => category.id === editId)?.parent)}
+            required={subcategoriesOnly}
           >
             <option value="">Top-level category</option>
             {content.categories.map((item) => <option key={item.id ?? item.slug} value={item.slug}>{item.name}</option>)}
@@ -292,6 +389,8 @@ function CategoryManager({ content, saveContent, requestConfirm }: {
         <TextField label="URL slug" value={slug} onChange={setSlug} placeholder="training-tops" />
         <TextAreaField label="Description" value={description} onChange={setDescription} />
         <TextField label="Image URL or /public path" value={image} onChange={setImage} placeholder="/images/category.jpg" />
+        {imageSource(image) && <div className="relative aspect-video overflow-hidden rounded-lg bg-background-muted"><Image src={imageSource(image)} alt="Category image preview" fill className="object-cover" /></div>}
+        <ImageUploadField value={image} onChange={setImage} />
         <TextField label="Eyebrow" value={eyebrow} onChange={setEyebrow} placeholder="Move with purpose" />
         {error && <p role="alert" className="text-sm text-error">{error}</p>}
         <div className="flex gap-2">
@@ -378,7 +477,7 @@ function ProductManager({ content, saveContent, requestConfirm }: {
           <article key={product.id ?? product.slug} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-background-muted">
-                <Image src={imageSource(product.image)} alt="" fill unoptimized className="object-cover" />
+                {imageSource(product.image) && <Image src={imageSource(product.image)} alt="" fill className="object-cover" />}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-heading">{product.name}</p>
@@ -421,12 +520,13 @@ function ProductManager({ content, saveContent, requestConfirm }: {
             {selectedCategory?.subcategories?.map((category) => <option key={category.id ?? category.slug} value={category.slug}>{category.name}</option>)}
           </select>
         </Field>
-        <TextAreaField label="Description" value={description} onChange={setDescription} />
-        <TextField label="Image URL or /public path" value={image} onChange={setImage} placeholder="/images/product.jpg" />
+        <TextAreaField label="Description" value={description} onChange={setDescription} required={false} />
+        <TextField label="Image URL or /public path" value={image} onChange={setImage} required={false} placeholder="/images/product.jpg" />
+        <ImageUploadField value={image} onChange={setImage} />
         <TextField label="Size chart path (optional)" value={sizeChart} onChange={setSizeChart} required={false} />
-        <TextField label="Sizes (comma separated)" value={sizes} onChange={setSizes} />
-        <TextField label="Materials" value={materials} onChange={setMaterials} />
-        <TextAreaField label="Features (comma separated)" value={features} onChange={setFeatures} />
+        <TextField label="Sizes (comma separated)" value={sizes} onChange={setSizes} required={false} />
+        <TextField label="Materials" value={materials} onChange={setMaterials} required={false}/>
+        <TextAreaField label="Features (comma separated)" value={features} onChange={setFeatures} required={false} />
         {error && <p role="alert" className="text-sm text-error">{error}</p>}
         <div className="flex gap-2">
           <button className={buttonClass} type="submit">{editId ? "Save product" : "Add product"}</button>
@@ -534,4 +634,108 @@ function SectionHeading({ title, description }: { title: string; description: st
 
 function EmptyState({ label }: { label: string }) {
   return <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted">{label}</div>;
+}
+
+function AdminLogin({ onLogin }: { onLogin: (admin: AdminUser) => Promise<void> }) {
+  const [creating, setCreating] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [bootstrapSecret, setBootstrapSecret] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy(true); setError("");
+    try {
+      if (creating) {
+        const setup = await fetch("/api/auth/bootstrap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-bootstrap-secret": bootstrapSecret },
+          body: JSON.stringify({ email, password }),
+        });
+        const payload = await setup.json() as { error?: string };
+        if (!setup.ok) throw new Error(payload.error ?? "Could not create the first admin account.");
+      }
+      const response = await fetch("/api/auth/login", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }),
+      });
+      const result = await response.json() as { admin?: AdminUser; error?: string };
+      if (!response.ok || !result.admin) throw new Error(result.error ?? "Sign in failed.");
+      await onLogin(result.admin);
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "Sign in failed.");
+    } finally { setBusy(false); }
+  }
+
+  return <main id="main-content" className="grid min-h-[70vh] place-items-center bg-background-subtle px-4 py-12">
+    <form onSubmit={handleSubmit} className="grid w-full max-w-md gap-4 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
+      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Activewear Custom</p><h1 className="mt-1 font-heading text-3xl font-extrabold text-heading">{creating ? "Create first admin" : "Admin sign in"}</h1></div>
+      <TextField label="Email" value={email} onChange={setEmail} placeholder="admin@example.com" />
+      <Field label="Password"><div className="relative"><input className={`${inputClass} pr-16`} type={showPassword ? "text" : "password"} autoComplete={creating ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={12} required /><button type="button" className="absolute inset-y-0 right-3 text-sm font-semibold text-brand" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button></div>{creating && <span className="mt-1 block text-xs text-muted">Use 8–12 characters.</span>}</Field>
+      {creating && <Field label="One-time setup secret"><input className={inputClass} type="password" autoComplete="off" value={bootstrapSecret} onChange={(event) => setBootstrapSecret(event.target.value)} required /></Field>}
+      {error && <p role="alert" className="text-sm text-error">{error}</p>}
+      <button type="submit" disabled={busy} className={buttonClass}>{busy ? "Please wait…" : creating ? "Create account and sign in" : "Sign in"}</button>
+      <button type="button" className="text-sm font-semibold text-brand hover:underline" onClick={() => { setCreating((value) => !value); setError(""); }}>{creating ? "Back to sign in" : "Set up the first admin account"}</button>
+    </form>
+  </main>;
+}
+
+function AdminUserManager({ currentAdmin, requestConfirm }: { currentAdmin: AdminUser; requestConfirm: (action: ConfirmAction) => void }) {
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function loadAdmins() {
+    const response = await fetch("/api/admin/users", { cache: "no-store" });
+    const payload = await response.json() as { admins?: AdminUser[]; error?: string };
+    if (!response.ok || !payload.admins) throw new Error(payload.error ?? "Unable to load admin users.");
+    setAdmins(payload.admins);
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/admin/users", { cache: "no-store" })
+      .then(async (response) => {
+        const payload = await response.json() as { admins?: AdminUser[]; error?: string };
+        if (!response.ok || !payload.admins) throw new Error(payload.error ?? "Unable to load admin users.");
+        if (mounted) setAdmins(payload.admins);
+      })
+      .catch((loadError: unknown) => { if (mounted) setError(loadError instanceof Error ? loadError.message : "Unable to load admin users."); });
+    return () => { mounted = false; };
+  }, []);
+
+  async function addUser(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(""); setBusy(true);
+    try {
+      const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      const result = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "Unable to create admin user.");
+      setEmail(""); setPassword(""); await loadAdmins();
+    } catch (createError) { setError(createError instanceof Error ? createError.message : "Unable to create admin user."); }
+    finally { setBusy(false); }
+  }
+
+  function removeUser(user: AdminUser) {
+    requestConfirm({
+      title: `Remove ${user.email}?`, description: "This account will lose access to the admin dashboard.",
+      run: () => { void fetch("/api/admin/users/delete", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: user.id }) }).then(async (response) => {
+        const payload = await response.json() as { error?: string };
+        if (!response.ok) throw new Error(payload.error ?? "Unable to remove admin account.");
+        await loadAdmins();
+      }).catch((removeError: unknown) => setError(removeError instanceof Error ? removeError.message : "Unable to remove admin account.")); },
+    });
+  }
+
+  return <div>
+    <SectionHeading title="Admin users" description="Add and remove accounts that can manage site content." />
+    <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="grid content-start gap-3">{admins.map((user) => <article key={user.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4"><div><p className="font-semibold text-heading">{user.email}{user.id === currentAdmin.id ? " (you)" : ""}</p><p className="text-xs text-muted">Added {new Date(user.createdAt).toLocaleDateString()}</p></div><button type="button" disabled={user.id === currentAdmin.id} className="rounded-lg px-3 py-2 text-sm font-semibold text-error hover:bg-red-50 disabled:opacity-40" onClick={() => removeUser(user)}>Remove</button></article>)}</div>
+      <form className="grid content-start gap-4 rounded-xl bg-background-subtle p-4" onSubmit={addUser}><h3 className="font-heading text-xl font-bold">Add an admin user</h3><TextField label="Email" value={email} onChange={setEmail} placeholder="admin@example.com" /><Field label="Password"><div className="relative"><input className={`${inputClass} pr-16`} type={showPassword ? "text" : "password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={12} autoComplete="new-password" required /><button type="button" className="absolute inset-y-0 right-3 text-sm font-semibold text-brand" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button></div></Field><p className="text-xs text-muted">Use 8–12 characters. Share the password securely; the app stores only a salted hash.</p><button className={buttonClass} disabled={busy} type="submit">{busy ? "Adding…" : "Add admin"}</button></form>
+    </div>
+    {error && <p className="mt-4 text-sm text-error" role="alert">{error}</p>}
+  </div>;
 }

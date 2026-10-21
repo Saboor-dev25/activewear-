@@ -1,12 +1,12 @@
-import type { Category } from "@/data/categories";
+import type { Category } from "@/backend/data/categories";
 import Image from "next/image";
 import Link from "next/link";
 
 export function CategoryCard({ category }: { category: Category }) {
   return <article 
-  className="group relative isolate min-h-72 overflow-hidden rounded-2xl bg-slate-800 transition-transform duration-300 hover:-translate-y-1 motion-reduce:transition-none">
-    <Image src={category.image} alt="" fill unoptimized sizes="(max-width: 768px) 100vw, 50vw" 
-    className="z-0 object-cover transition duration-500 group-hover:scale-105" />
+  className="group relative isolate min-h-72 overflow-hidden rounded-2xl bg-slate-800 transition-transform duration-300 hover:-translate-y-1 active:scale-[1.01] motion-reduce:transition-none">
+    <Image src={category.image} alt="" fill sizes="(max-width: 768px) 100vw, 50vw"
+    className="z-0 object-cover transition duration-500 group-hover:scale-105 group-active:scale-105" />
     <div className="absolute inset-0 z-10 bg-[linear-gradient(0deg,rgba(5,12,28,0.95)_0%,rgba(5,12,28,0.72)_45%,rgba(5,12,28,0.08)_100%)]" />
     <div className="relative z-20 flex min-h-72 flex-col justify-end p-6 text-white sm:p-8">
       <p style={{ color: "#FFFFFF" }} className="mb-2 text-xs font-bold uppercase tracking-[0.16em] drop-shadow-sm">{category.eyebrow}</p>

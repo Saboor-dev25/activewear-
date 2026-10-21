@@ -9,6 +9,15 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <section aria-labelledby="faq-title" className="section-padding bg-background-subtle">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqs.map((faq) => ({
+          "@type": "Question",
+          name: faq.question,
+          acceptedAnswer: { "@type": "Answer", text: faq.answer },
+        })),
+      }).replace(/</g, "\\u003c") }} />
       <div className="container-site grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-brand">Good to know</p>

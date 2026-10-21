@@ -7,7 +7,7 @@ export function Hero() {
   return (
     <section aria-labelledby="home-hero-title" className="relative isolate flex min-h-[min(78vh,760px)] items-center overflow-hidden bg-slate-900">
       
-      <Image src={Banner} alt="Athlete training outdoors" fill priority unoptimized sizes="100vw" className="z-0 object-cover object-center" />
+      <Image src={Banner} alt="Athlete training outdoors" fill priority sizes="100vw" className="z-0 object-cover object-center" />
       <div aria-hidden="true" className="absolute inset-0 z-10 bg-[linear-gradient(90deg,rgba(5,12,28,0.92)_0%,rgba(5,12,28,0.72)_52%,rgba(5,12,28,0.2)_100%)]" />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-[#050C1C]/45 to-transparent" />
       <div className="container-site relative z-20 py-20 sm:py-28">

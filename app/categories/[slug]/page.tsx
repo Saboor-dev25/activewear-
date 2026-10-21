@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { CategoryCard } from "@/components/categories/CategoryCard";
 import { ProductCard } from "@/components/products/ProductCard";
 import { useContent } from "@/components/providers/ContentProvider";
-import { findCategoryBySlug, findCategoryParent } from "@/data/categories";
+import { findCategoryBySlug, findCategoryParent } from "@/backend/data/categories";
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const { content } = useContent();
+  const [search, setSearch] = useState("");
+  const [subcategoryFilter, setSubcategoryFilter] = useState("");
   const category = findCategoryBySlug(slug, content.categories);
 
   if (!category) {
@@ -25,6 +28,9 @@ export default function CategoryPage() {
   const categoryProducts = content.products.filter((product) => parent
     ? product.categorySlug === parent.slug && product.subcategorySlug === category.slug
     : product.categorySlug === category.slug);
+  const filteredProducts = categoryProducts.filter((product) =>
+    (!subcategoryFilter || product.subcategorySlug === subcategoryFilter)
+    && `${product.name} ${product.description} ${product.materials} ${product.features.join(" ")}`.toLowerCase().includes(search.trim().toLowerCase()));
   const relatedCategories = parent ? parent.subcategories ?? [] : category.subcategories ?? [];
   const otherCategories = content.categories.filter((item) => item.slug !== (parent?.slug ?? category.slug));
 
@@ -61,18 +67,22 @@ export default function CategoryPage() {
       <section className="container-site pb-20" aria-labelledby="products-title">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <h2 id="products-title" className="heading-section">Explore the collection</h2>
-          <span className="text-sm text-muted">{categoryProducts.length} products</span>
+          <span className="text-sm text-muted">{filteredProducts.length} products</span>
         </div>
-        {categoryProducts.length > 0 ? (
+        {categoryProducts.length > 0 && <div className="mb-5 flex flex-wrap gap-3">
+          <input className="min-w-64 flex-1 rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products" aria-label="Search products" />
+          {relatedCategories.length > 0 && <select className="rounded-lg border border-border bg-white px-4 py-3 text-sm" value={subcategoryFilter} onChange={(event) => setSubcategoryFilter(event.target.value)} aria-label="Filter by subcategory"><option value="">All subcategories</option>{relatedCategories.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select>}
+        </div>}
+        {filteredProducts.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {categoryProducts.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard key={product.id ?? product.slug} product={product} />
             ))}
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-background-subtle p-8 text-center">
-            <h3 className="font-heading text-2xl font-bold">New products are on the way</h3>
-            <p className="mt-2 text-muted">Ask us about custom {category.name.toLowerCase()} while we prepare this collection.</p>
+            <h3 className="font-heading text-2xl font-bold">{categoryProducts.length === 0 ? "New products are on the way" : "No products match those filters"}</h3>
+            <p className="mt-2 text-muted">{categoryProducts.length === 0 ? `Ask us about custom ${category.name.toLowerCase()} while we prepare this collection.` : "Try a different search or subcategory."}</p>
           </div>
         )}
       </section>
