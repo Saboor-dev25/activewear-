@@ -1,5 +1,4 @@
 import PerformanceWearImage from "@/public/images/perform.png";
-import Banner from "@/public/images/banner.png";
 import { StaticImageData } from "next/image"; // Optional, but good for typing
 
 export type Category = {
@@ -8,6 +7,8 @@ export type Category = {
   name: string;
   description: string;
   image: string | StaticImageData; // Allow either a URL string or a static import
+  /** Optional focal point for images with an off-center subject (CSS object-position value). */
+  imagePosition?: string;
   eyebrow: string;
   /** Nested collections use their parent's slug in Product.categorySlug for compatibility. */
   subcategories?: Category[];
@@ -52,22 +53,5 @@ export const categories: Category[] = [
     description: "Custom kits for clubs, schools, and the people who show up.", 
     image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1100&q=85", 
     eyebrow: "Made as a team" 
-  },
-  
-  { 
-    slug: "demo", 
-    name: "Demo Category added", 
-    description: " This is a demo category for testing purposes. And products in these categories are demo products.", 
-    image: Banner, 
-    eyebrow: "Hope the site works" ,
-    subcategories: [
-    {
-  slug: "demo-subcategory",
-  name: "Demo Subcategory",
-  description: "A demo subcategory for testing purposes.",
-  image: "/images/perform.png",
-  eyebrow: "Testing the waters"
-}
-    ]
   },
 ];

@@ -20,8 +20,8 @@ export default function CategoriesPage() {
       <h1 className="heading-display">Made for the way you move.</h1>
       <p className="mt-4 text-lg text-muted">Explore custom sportswear collections for teams, clubs, and brands.</p>
     </header>
-    <label className="mb-6 block max-w-lg"><span className="sr-only">Search categories and subcategories</span><input className="w-full rounded-lg border border-border bg-white px-4 py-3 text-sm text-heading outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories and subcategories" /></label>
-    <div className="grid gap-5 md:grid-cols-2">{categories.map((category) => <CategoryCard key={category.id ?? category.slug} category={category} />)}</div>
+    <label className="mb-6 block max-w-lg"><span className="sr-only">Search categories and subcategories</span><input className="w-full rounded-lg border border-border bg-surface px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories and subcategories" /></label>
+    <div className="mx-1 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{categories.map((category) => <CategoryCard key={category.id ?? category.slug} category={category} compact />)}</div>
     {categories.length === 0 && <p className="rounded-xl border border-border bg-background-subtle p-8 text-center text-muted">No collections match that search.</p>}
   </main>;
 }

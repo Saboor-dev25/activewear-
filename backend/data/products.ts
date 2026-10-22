@@ -1,5 +1,4 @@
 import { StaticImageData } from "next/image";
-import Demoimage from "@/public/images/perform.png";
 
 export type Product = {
   id?: string;
@@ -10,6 +9,8 @@ export type Product = {
   name: string;
   description: string;
   image: string | StaticImageData;
+  /** Optional focal point for images with an off-center subject. */
+  imagePosition?: string;
   sizeChart?: string;
   sizes: string[];
   materials: string;
@@ -34,18 +35,6 @@ export const products: Product[] = [
     name: "Custom Performance Leggings", 
     description: "Supportive custom leggings made for training, movement, and a coordinated team look.", 
     image: "https://images.unsplash.com/photo-1506629905607-d9f8a3bde39b?auto=format&fit=crop&w=1000&q=85",
-     sizeChart: "/size-charts/apparel-size-chart.pdf", 
-     sizes: ["XS", "S", "M", "L", "XL", "2XL"], 
-     materials: "Stretch performance fabric with a soft hand feel.", 
-     features: ["All-over print options", "Flexible four-way stretch", "Team and individual sizing"] 
-    },
-
-     { slug: "Demo-product", 
-    categorySlug: "demo", 
-     subcategorySlug: "demo-subcategory",
-    name: "Demo Product", 
-    description: "this products is being added in demo category for testing.", 
-    image: Demoimage,
      sizeChart: "/size-charts/apparel-size-chart.pdf", 
      sizes: ["XS", "S", "M", "L", "XL", "2XL"], 
      materials: "Stretch performance fabric with a soft hand feel.", 

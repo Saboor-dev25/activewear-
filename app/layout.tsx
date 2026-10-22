@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Barlow_Condensed, DM_Sans } from "next/font/google";
+import Script from "next/script";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { QuoteProvider } from "@/components/quote/QuoteModal";
 import { ContentProvider } from "@/components/providers/ContentProvider";
@@ -38,8 +39,11 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="en" className={`${barlow.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${barlow.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body>
+        <Script id="activewear-theme-init" strategy="beforeInteractive">
+          {`try { var savedTheme = localStorage.getItem("activewear-theme"); document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light"; } catch { document.documentElement.dataset.theme = "light"; }`}
+        </Script>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",

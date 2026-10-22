@@ -10,6 +10,7 @@ import type { Testimonial } from "@/backend/data/testimonials";
 import { makeStableId, type Company, type ContentData } from "@/backend/data/content";
 import { useContent } from "@/components/providers/ContentProvider";
 import { demoContent } from "@/backend/data/content";
+import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
 type ContentSection = keyof ContentData;
 type Section = ContentSection | "subcategories" | "adminUsers";
@@ -27,9 +28,9 @@ const sectionNames: Record<Section, string> = {
   adminUsers: "Admin users",
 };
 
-const inputClass = "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-heading outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
+const inputClass = "w-full rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-heading outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/15";
 const buttonClass = "inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50";
-const secondaryButtonClass = "inline-flex items-center justify-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-heading transition hover:bg-background-subtle";
+const secondaryButtonClass = "inline-flex items-center justify-center rounded-lg border border-border bg-surface px-3 py-2 text-sm font-semibold text-heading transition hover:bg-background-subtle";
 
 function flattenCategories(items: Category[], parent?: Category): CategoryEntry[] {
   return items.flatMap((category) => [
@@ -143,7 +144,7 @@ function ConfirmDialog({ action, onCancel }: { action: ConfirmAction; onCancel: 
         if (event.target === event.currentTarget) onCancel();
       }}
     >
-      <section role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <section role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-2xl">
         <h2 id="confirm-title" className="font-heading text-2xl font-bold">{action.title}</h2>
         <p className="mt-3 text-sm text-muted">{action.description}</p>
         <div className="mt-6 flex justify-end gap-3">
@@ -213,18 +214,19 @@ export function AdminDashboard() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Link href="/" className={secondaryButtonClass}>View website ↗</Link>
+          <ThemeToggle />
           <span className="hidden text-sm text-muted sm:inline">{admin.email}</span>
           <button type="button" className={secondaryButtonClass} onClick={async () => { await fetch("/api/auth/logout", { method: "POST" }); setAdmin(null); }}>Sign out</button>
           <button
             type="button"
-            className="rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-error hover:bg-red-50"
+            className="rounded-lg border border-red-200 bg-surface px-3 py-2 text-sm font-semibold text-error hover:bg-red-50"
             onClick={() => setConfirmAction({
-              title: "Restore demo content?",
-              description: "This replaces your current browser content with the original demo data. This cannot be undone.",
+              title: "Restore original content?",
+              description: "This replaces your current website content with the original content. This cannot be undone.",
               run: restoreDemoContent,
             })}
           >
-            Restore demo data
+            Restore original content
           </button>
         </div>
       </header>
@@ -232,7 +234,7 @@ export function AdminDashboard() {
       {migrationMessage && <div role="status" className="mb-5 rounded-lg border border-brand-border bg-brand-soft px-4 py-3 text-sm text-heading">{migrationMessage}</div>}
       {!hydrated && <div className="mb-5 rounded-lg border border-brand-border bg-brand-soft px-4 py-3 text-sm text-heading">Loading saved content…</div>}
       <div className="grid gap-5 lg:grid-cols-[230px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-border bg-white p-3 shadow-sm lg:sticky lg:top-5 lg:h-fit">
+        <aside className="rounded-2xl border border-border bg-surface p-3 shadow-sm lg:sticky lg:top-5 lg:h-fit">
           <nav aria-label="Admin sections" className="flex gap-2 overflow-x-auto lg:grid">
             {(Object.keys(sectionNames) as Section[]).map((key) => (
               <button
@@ -248,7 +250,7 @@ export function AdminDashboard() {
           </nav>
           <div className="mt-4 hidden rounded-xl bg-background-subtle p-3 text-xs leading-relaxed text-muted lg:block">Changes are saved securely to the shared site content.</div>
         </aside>
-        <section className="min-w-0 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6">
+        <section className="min-w-0 rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-6">
           {section === "categories" && <CategoryManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
           {section === "subcategories" && <CategoryManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} subcategoriesOnly />}
           {section === "products" && <ProductManager content={content} saveContent={saveContent} requestConfirm={setConfirmAction} />}
@@ -279,17 +281,18 @@ function CategoryManager({ content, saveContent, requestConfirm, subcategoriesOn
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
+  const [imagePosition, setImagePosition] = useState("center");
   const [eyebrow, setEyebrow] = useState("");
   const [error, setError] = useState("");
 
   function resetForm() {
-    setEditId(null); setParentSlug(""); setName(""); setSlug(""); setDescription(""); setImage(""); setEyebrow(""); setError("");
+    setEditId(null); setParentSlug(""); setName(""); setSlug(""); setDescription(""); setImage(""); setImagePosition("center"); setEyebrow(""); setError("");
   }
 
   function editCategory(entry: CategoryEntry) {
     const item = entry.category;
     setEditId(item.id ?? null); setParentSlug(entry.parent?.slug ?? ""); setName(item.name); setSlug(item.slug);
-    setDescription(item.description); setImage(imageSource(item.image)); setEyebrow(item.eyebrow); setError("");
+    setDescription(item.description); setImage(imageSource(item.image)); setImagePosition(item.imagePosition ?? "center"); setEyebrow(item.eyebrow); setError("");
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -301,7 +304,7 @@ function CategoryManager({ content, saveContent, requestConfirm, subcategoriesOn
     const editingEntry = entries.find(({ category }) => category.id === editId);
     if (editingEntry && !editingEntry.parent && parentSlug) { setError("Top-level categories cannot be moved under another category while editing."); return; }
     const id = editId ?? makeStableId(parentSlug ? "subcategory" : "category");
-    const nextCategory: Category = { id, slug: normalizedSlug, name: name.trim(), description: description.trim(), image: image.trim(), eyebrow: eyebrow.trim() };
+    const nextCategory: Category = { id, slug: normalizedSlug, name: name.trim(), description: description.trim(), image: image.trim(), imagePosition: imagePosition.trim() || "center", eyebrow: eyebrow.trim() };
     let nextCategories = content.categories;
     if (editId) {
       nextCategories = replaceCategory(nextCategories, editId, nextCategory);
@@ -353,7 +356,7 @@ function CategoryManager({ content, saveContent, requestConfirm, subcategoriesOn
           <article key={entry.category.id ?? entry.category.slug} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-background-muted">
-                {imageSource(entry.category.image) && <Image src={imageSource(entry.category.image)} alt="" fill className="object-cover" />}
+                {imageSource(entry.category.image) && <Image src={imageSource(entry.category.image)} alt="" fill className="object-contain p-1" />}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-heading">
@@ -389,7 +392,8 @@ function CategoryManager({ content, saveContent, requestConfirm, subcategoriesOn
         <TextField label="URL slug" value={slug} onChange={setSlug} placeholder="training-tops" />
         <TextAreaField label="Description" value={description} onChange={setDescription} />
         <TextField label="Image URL or /public path" value={image} onChange={setImage} placeholder="/images/category.jpg" />
-        {imageSource(image) && <div className="relative aspect-video overflow-hidden rounded-lg bg-background-muted"><Image src={imageSource(image)} alt="Category image preview" fill className="object-cover" /></div>}
+        <TextField label="Image focal point" value={imagePosition} onChange={setImagePosition} placeholder="center" required={false} />
+        {imageSource(image) && <div className="relative aspect-video overflow-hidden rounded-lg bg-background-muted"><Image src={imageSource(image)} alt="Category image preview" fill className="object-contain p-2" /></div>}
         <ImageUploadField value={image} onChange={setImage} />
         <TextField label="Eyebrow" value={eyebrow} onChange={setEyebrow} placeholder="Move with purpose" />
         {error && <p role="alert" className="text-sm text-error">{error}</p>}
@@ -415,6 +419,7 @@ function ProductManager({ content, saveContent, requestConfirm }: {
   const [subcategorySlug, setSubcategorySlug] = useState("");
   const [description, setDescription] = useState("");
   const [image, setImage] = useState("");
+  const [imagePosition, setImagePosition] = useState("center");
   const [sizeChart, setSizeChart] = useState("");
   const [sizes, setSizes] = useState("XS, S, M, L, XL, 2XL");
   const [materials, setMaterials] = useState("");
@@ -424,12 +429,12 @@ function ProductManager({ content, saveContent, requestConfirm }: {
 
   function resetForm() {
     setEditId(null); setName(""); setSlug(""); setCategorySlug(content.categories[0]?.slug ?? ""); setSubcategorySlug("");
-    setDescription(""); setImage(""); setSizeChart(""); setSizes("XS, S, M, L, XL, 2XL"); setMaterials(""); setFeatures(""); setError("");
+    setDescription(""); setImage(""); setImagePosition("center"); setSizeChart(""); setSizes("XS, S, M, L, XL, 2XL"); setMaterials(""); setFeatures(""); setError("");
   }
 
   function editProduct(product: Product) {
     setEditId(product.id ?? null); setName(product.name); setSlug(product.slug); setCategorySlug(product.categorySlug);
-    setSubcategorySlug(product.subcategorySlug ?? ""); setDescription(product.description); setImage(imageSource(product.image));
+    setSubcategorySlug(product.subcategorySlug ?? ""); setDescription(product.description); setImage(imageSource(product.image)); setImagePosition(product.imagePosition ?? "center");
     setSizeChart(product.sizeChart ?? ""); setSizes(product.sizes.join(", ")); setMaterials(product.materials);
     setFeatures(product.features.join(", ")); setError("");
   }
@@ -447,6 +452,7 @@ function ProductManager({ content, saveContent, requestConfirm }: {
     const product: Product = {
       id: editId ?? makeStableId("product"), slug: normalizedSlug, categorySlug,
       ...(subcategorySlug ? { subcategorySlug } : {}), name: name.trim(), description: description.trim(), image: image.trim(),
+      imagePosition: imagePosition.trim() || "center",
       ...(sizeChart.trim() ? { sizeChart: sizeChart.trim() } : {}),
       sizes: sizes.split(",").map((value) => value.trim()).filter(Boolean),
       materials: materials.trim(), features: features.split(",").map((value) => value.trim()).filter(Boolean),
@@ -477,7 +483,7 @@ function ProductManager({ content, saveContent, requestConfirm }: {
           <article key={product.id ?? product.slug} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
             <div className="flex min-w-0 items-center gap-3">
               <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-background-muted">
-                {imageSource(product.image) && <Image src={imageSource(product.image)} alt="" fill className="object-cover" />}
+                {imageSource(product.image) && <Image src={imageSource(product.image)} alt="" fill className="object-contain p-1" />}
               </div>
               <div className="min-w-0">
                 <p className="truncate font-semibold text-heading">{product.name}</p>
@@ -522,7 +528,9 @@ function ProductManager({ content, saveContent, requestConfirm }: {
         </Field>
         <TextAreaField label="Description" value={description} onChange={setDescription} required={false} />
         <TextField label="Image URL or /public path" value={image} onChange={setImage} required={false} placeholder="/images/product.jpg" />
+        <TextField label="Image focal point" value={imagePosition} onChange={setImagePosition} required={false} placeholder="center" />
         <ImageUploadField value={image} onChange={setImage} />
+        {imageSource(image) && <div className="relative aspect-video overflow-hidden rounded-lg border border-border bg-background-muted"><Image src={imageSource(image)} alt="Product image preview" fill className="object-contain p-2" /></div>}
         <TextField label="Size chart path (optional)" value={sizeChart} onChange={setSizeChart} required={false} />
         <TextField label="Sizes (comma separated)" value={sizes} onChange={setSizes} required={false} />
         <TextField label="Materials" value={materials} onChange={setMaterials} required={false}/>
@@ -669,8 +677,8 @@ function AdminLogin({ onLogin }: { onLogin: (admin: AdminUser) => Promise<void> 
   }
 
   return <main id="main-content" className="grid min-h-[70vh] place-items-center bg-background-subtle px-4 py-12">
-    <form onSubmit={handleSubmit} className="grid w-full max-w-md gap-4 rounded-2xl border border-border bg-white p-6 shadow-sm sm:p-8">
-      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Activewear Custom</p><h1 className="mt-1 font-heading text-3xl font-extrabold text-heading">{creating ? "Create first admin" : "Admin sign in"}</h1></div>
+    <form onSubmit={handleSubmit} className="grid w-full max-w-md gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
+      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Activewear Custom</p><h1 className="mt-1 font-heading text-3xl font-extrabold text-heading">{creating ? "Create first admin" : "Admin sign in"}</h1></div><ThemeToggle /></div>
       <TextField label="Email" value={email} onChange={setEmail} placeholder="admin@example.com" />
       <Field label="Password"><div className="relative"><input className={`${inputClass} pr-16`} type={showPassword ? "text" : "password"} autoComplete={creating ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={12} required /><button type="button" className="absolute inset-y-0 right-3 text-sm font-semibold text-brand" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((value) => !value)}>{showPassword ? "Hide" : "Show"}</button></div>{creating && <span className="mt-1 block text-xs text-muted">Use 8–12 characters.</span>}</Field>
       {creating && <Field label="One-time setup secret"><input className={inputClass} type="password" autoComplete="off" value={bootstrapSecret} onChange={(event) => setBootstrapSecret(event.target.value)} required /></Field>}

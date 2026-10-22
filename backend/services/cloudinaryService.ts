@@ -17,7 +17,9 @@ export async function uploadImage(file: File): Promise<{ url: string; publicId: 
       const stream = cloudinary.uploader.upload_stream({
         folder: "activewear",
         resource_type: "image",
-        transformation: [{ width: 2400, height: 2400, crop: "limit", quality: "auto" }],
+        // Keep the full source dimensions up to this ceiling and avoid the aggressive
+        // default quality setting that can make detailed garment prints look soft.
+        transformation: [{ width: 3000, height: 3000, crop: "limit", quality: "auto:best" }],
       }, (error, result) => {
         if (error || !result) reject(error ?? new Error("Cloudinary returned no image."));
         else resolve({ secure_url: result.secure_url, public_id: result.public_id });

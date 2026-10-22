@@ -55,10 +55,10 @@ export default function CategoryPage() {
 
       {relatedCategories.length > 0 && (
         <section className="container-site pb-16" aria-labelledby="subcategories-title">
-          <h2 id="subcategories-title" className="mb-6 heading-section">Shop by collection</h2>
-          <div className="grid gap-5 md:grid-cols-2">
+          <h2 id="subcategories-title" className="mb-8 heading-section" style={{ marginBottom: "48px" }}>Shop by collection</h2>
+          <div className="mx-1 grid gap-5 md:grid-cols-2 lg:grid-cols-3" style={{ columnGap: "40px", rowGap: "40px" }}>
             {relatedCategories.map((item) => (
-              <CategoryCard key={item.id ?? item.slug} category={item} />
+              <CategoryCard key={item.id ?? item.slug} category={item} compact />
             ))}
           </div>
         </section>
@@ -70,8 +70,8 @@ export default function CategoryPage() {
           <span className="text-sm text-muted">{filteredProducts.length} products</span>
         </div>
         {categoryProducts.length > 0 && <div className="mb-5 flex flex-wrap gap-3">
-          <input className="min-w-64 flex-1 rounded-lg border border-border bg-white px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products" aria-label="Search products" />
-          {relatedCategories.length > 0 && <select className="rounded-lg border border-border bg-white px-4 py-3 text-sm" value={subcategoryFilter} onChange={(event) => setSubcategoryFilter(event.target.value)} aria-label="Filter by subcategory"><option value="">All subcategories</option>{relatedCategories.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select>}
+          <input className="min-w-64 flex-1 rounded-lg border border-border bg-surface px-4 py-3 text-sm text-heading placeholder:text-muted outline-none focus:border-brand focus:ring-2 focus:ring-brand/15" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products" aria-label="Search products" />
+          {relatedCategories.length > 0 && <select className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-heading" value={subcategoryFilter} onChange={(event) => setSubcategoryFilter(event.target.value)} aria-label="Filter by subcategory"><option value="">All subcategories</option>{relatedCategories.map((item) => <option key={item.slug} value={item.slug}>{item.name}</option>)}</select>}
         </div>}
         {filteredProducts.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -89,10 +89,10 @@ export default function CategoryPage() {
 
       {otherCategories.length > 0 && (
         <section className="container-site pb-20" aria-label="Other categories">
-          <h2 className="mb-6 font-heading text-2xl font-bold">Explore another category</h2>
-          <div className="grid gap-5 md:grid-cols-2">
+          <h2 className="mb-8 font-heading text-2xl font-bold" style={{ marginBottom: "48px" }}>Explore another category</h2>
+          <div className="mx-1 grid gap-5 md:grid-cols-2 lg:grid-cols-3" style={{ columnGap: "40px", rowGap: "40px" }}>
             {otherCategories.map((item) => (
-              <CategoryCard key={item.id ?? item.slug} category={item} />
+              <CategoryCard key={item.id ?? item.slug} category={item} compact />
             ))}
           </div>
         </section>

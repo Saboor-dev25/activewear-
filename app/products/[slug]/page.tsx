@@ -59,9 +59,11 @@ export default function ProductPage() {
             src={product.image}
             alt={product.name}
             fill
+            quality={90}
             priority
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105 group-active:scale-105 motion-reduce:transition-none"
+            style={{ objectPosition: product.imagePosition ?? "center" }}
+            className="object-contain"
           />
         </div>
         <div>

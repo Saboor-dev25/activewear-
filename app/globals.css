@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-
-@import "tailwindcss";
-
 /* ========================================
    1. GLOBAL DESIGN VARIABLES
    ======================================== */
@@ -11,37 +8,74 @@
   color-scheme: light;
 
   /* Brand colors */
-  --brand: #2563eb;
+  /* --brand: #2563eb;
   --brand-hover: #1d4ed8;
   --brand-active: #1e40af;
   --brand-soft: #eff6ff;
   --brand-border: #bfdbfe;
-  --on-brand: #ffffff;
+  --on-brand: #ffffff; */
 
   /* Backgrounds */
-  --background: #ffffff;
+  /* --background: #ffffff;
   --background-subtle: #f7f8fa;
   --background-muted: #eef1f5;
   --surface: #ffffff;
   --surface-hover: #f3f6fa;
-  --surface-elevated: #ffffff;
+  --surface-elevated: #ffffff; */
 
   /* Text */
-  --heading: #111827;
+  /* --heading: #111827;
   --text: #374151;
   --text-muted: #6b7280;
   --text-subtle: #9ca3af;
-  --text-inverse: #ffffff;
+  --text-inverse: #ffffff; */
 
   /* Borders */
-  --border: #e5e7eb;
+  /* --border: #e5e7eb;
   --border-strong: #d1d5db;
-  --border-focus: #2563eb;
+  --border-focus: #2563eb; */
 
   /* Status colors */
+   /* --success: #15803d;
+  --warning: #b45309;
+  --error: #dc2626;  */
+
+  /* Brand colors */
+  --brand: #ff0100;
+  --brand-hover: #e60000;
+  --brand-active: #c90000;
+  --brand-soft: #fff0f0;
+  --testimonial-glow: #ffcaca;
+  --brand-border: #ffb3b3;
+  --on-brand: #ffffff;
+
+
+   /* Backgrounds */
+  --background: #ffffff;
+  --background-subtle: #f7f7f7;
+  --background-muted: #eeeeee;
+  --surface: #ffffff;
+  --surface-hover: #f5f5f5;
+  --surface-elevated: #ffffff;
+
+   /* Text */
+  --heading: #101010;
+  --text: #292929;
+  --text-muted: #5d5d5d;
+  --text-subtle: #767676;
+  --text-inverse: #ffffff;
+
+
+   /* Borders */
+  --border: #e5e5e5;
+  --border-strong: #cccccc;
+  --border-focus: #ff0100;
+
+
+   /* Status colors */
   --success: #15803d;
   --warning: #b45309;
-  --error: #dc2626;
+  --error: #c90000;
 
   /* Typography */
   --font-heading: var(--font-barlow);
@@ -75,16 +109,103 @@
   --radius-pill: 9999px;
 
   /* Shadows */
-  --shadow-card: 0 4px 20px rgb(17 24 39 / 5%);
+  /* --shadow-card: 0 4px 20px rgb(17 24 39 / 5%);
   --shadow-card-hover: 0 12px 32px rgb(17 24 39 / 10%);
   --shadow-dropdown: 0 16px 40px rgb(17 24 39 / 12%);
-  --shadow-focus: 0 0 0 3px rgb(37 99 235 / 25%);
+  --shadow-focus: 0 0 0 3px rgb(37 99 235 / 25%); */
+
+
+  /* Shadows */
+  --shadow-card: 0 4px 20px rgb(16 16 16 / 5%);
+  --shadow-card-hover: 0 12px 32px rgb(16 16 16 / 10%);
+  --shadow-dropdown: 0 16px 40px rgb(16 16 16 / 12%);
+  --shadow-focus: 0 0 0 3px rgb(255 1 0 / 25%);
 
   /* Motion */
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 400ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --brand: #ff4b49;
+  --brand-hover: #ff6865;
+  --brand-active: #f73836;
+  --brand-soft: #3b1b1b;
+  --testimonial-glow: #3b1b1b;
+  --brand-border: #71302f;
+  --on-brand: #ffffff;
+
+  --background: #111214;
+  --background-subtle: #191a1d;
+  --background-muted: #24262a;
+  --surface: #1c1e22;
+  --surface-hover: #282a2f;
+  --surface-elevated: #222429;
+
+  --heading: #f5f5f5;
+  --text: #e2e3e5;
+  --text-muted: #b0b2b7;
+  --text-subtle: #8f9299;
+  --text-inverse: #111214;
+
+  --border: #34363b;
+  --border-strong: #4a4d54;
+  --border-focus: #ff6865;
+
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --error: #ff7773;
+
+  --shadow-card: 0 4px 20px rgb(0 0 0 / 20%);
+  --shadow-card-hover: 0 12px 32px rgb(0 0 0 / 32%);
+  --shadow-dropdown: 0 16px 40px rgb(0 0 0 / 38%);
+  --shadow-focus: 0 0 0 3px rgb(255 75 73 / 32%);
+}
+
+.testimonial-glow {
+  background-color: var(--testimonial-glow);
+}
+
+html[data-theme="dark"] .bg-red-50 {
+  background-color: #351b1b;
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: var(--surface);
+}
+
+html[data-theme="dark"] .border-red-200 {
+  border-color: #71302f;
+}
+
+html[data-theme="dark"] .text-red-900 {
+  color: #ffc5c3;
+}
+
+html[data-theme="dark"] .bg-green-50 {
+  background-color: #153021;
+}
+
+html[data-theme="dark"] .border-green-200 {
+  border-color: #286c43;
+}
+
+html[data-theme="dark"] .text-green-900 {
+  color: #b7f7ca;
+}
+
+html[data-theme="dark"] .site-logo-image {
+  filter: brightness(0) invert(1);
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #b9bbc1;
+  opacity: 1;
 }
 
 /* ========================================

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FocusEvent } from "react";
 import { useContent } from "@/components/providers/ContentProvider";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
 
 export function Testimonials() {
   const { content } = useContent();
@@ -37,7 +38,7 @@ export function Testimonials() {
   }
 
   if (testimonials.length === 0) {
-    return <section aria-labelledby="testimonials-title" className="section-padding"><div className="container-site"><h2 id="testimonials-title" className="heading-section">Teams that feel the difference</h2><p className="mt-3 text-muted">Customer stories will appear here.</p></div></section>;
+    return <section aria-labelledby="testimonials-title" className="section-padding"><div className="container-site"><MaskedHeading id="testimonials-title" className="heading-section">Teams that feel the difference</MaskedHeading><p className="mt-3 text-muted">Customer stories will appear here.</p></div></section>;
   }
   const displayActive = active % testimonials.length;
 
@@ -51,12 +52,12 @@ export function Testimonials() {
       onFocusCapture={() => setIsFocused(true)}
       onBlurCapture={handleBlur}
     >
-      <div aria-hidden="true" className="pointer-events-none absolute -left-20 top-10 -z-10 size-72 rounded-full bg-brand-soft/70 blur-3xl" />
-      <div aria-hidden="true" className="pointer-events-none absolute -right-16 bottom-0 -z-10 size-80 rounded-full bg-blue-100/60 blur-3xl" />
-      <div className="container-site relative">
+      <div aria-hidden="true" className="testimonial-glow pointer-events-none absolute -left-20 top-10 z-0 size-72 rounded-full opacity-70 blur-3xl" />
+      <div aria-hidden="true" className="testimonial-glow pointer-events-none absolute -right-16 bottom-0 z-0 size-80 rounded-full blur-3xl" />
+      <div className="container-site relative z-10">
         <div className="mb-9 max-w-2xl">
           <p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-brand">The word is out</p>
-          <h2 id="testimonials-title" className="heading-section">Teams that feel the difference</h2>
+          <MaskedHeading id="testimonials-title" className="heading-section">Teams that feel the difference</MaskedHeading>
         </div>
 
         <div className="overflow-hidden rounded-2xl" aria-live={isPaused ? "polite" : "off"}>
@@ -80,8 +81,8 @@ export function Testimonials() {
         <div className="mt-5 flex items-center justify-between gap-4">
           <p className="text-sm text-muted" aria-live="polite">{displayActive + 1} of {testimonials.length}</p>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={showPrevious} aria-label="Previous testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-white text-heading transition hover:border-brand hover:text-brand motion-reduce:transition-none">←</button>
-            <button type="button" onClick={showNext} aria-label="Next testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-white text-heading transition hover:border-brand hover:text-brand motion-reduce:transition-none">→</button>
+            <button type="button" onClick={showPrevious} aria-label="Previous testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-surface text-heading transition hover:border-brand hover:bg-background-subtle hover:text-brand motion-reduce:transition-none">←</button>
+            <button type="button" onClick={showNext} aria-label="Next testimonial" className="grid size-10 place-items-center rounded-full border border-border bg-surface text-heading transition hover:border-brand hover:bg-background-subtle hover:text-brand motion-reduce:transition-none">→</button>
           </div>
         </div>
       </div>

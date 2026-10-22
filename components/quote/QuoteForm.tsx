@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 
-const fieldClass = "w-full rounded-md border border-border bg-white px-3 py-2.5 text-heading placeholder:text-subtle focus:border-brand focus:outline-none";
+const fieldClass = "w-full rounded-md border border-border bg-surface px-3 py-2.5 text-heading placeholder:text-muted focus:border-brand focus:outline-none";
 
 export function QuoteForm({ productName = "" }: { productName?: string }) {
   const [status, setStatus] = useState<"idle" | "success">("idle");
@@ -26,7 +26,7 @@ export function QuoteForm({ productName = "" }: { productName?: string }) {
   return status === "success" ? (
     <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-5 text-green-900">
       <p className="font-semibold">Your request is ready.</p>
-      <p className="mt-1 text-sm">This demo validates requests in your browser. Connect a form service or backend to deliver it to your team.</p>
+      <p className="mt-1 text-sm">Your request passed the form checks, but it has not been sent. Please contact us directly to follow up.</p>
       <button className="mt-4 font-semibold underline" type="button" onClick={() => setStatus("idle")}>Send another request</button>
     </div>
   ) : (
@@ -38,7 +38,7 @@ export function QuoteForm({ productName = "" }: { productName?: string }) {
       <label className="grid gap-1.5 text-sm font-semibold text-heading">Project details<textarea className={fieldClass} name="message" rows={3} placeholder="Tell us about your team, timing, or customization needs." required minLength={10} /></label>
       {error && <p role="alert" className="text-sm text-error">{error}</p>}
       <Button type="submit" className="rounded-md bg-brand px-5 py-3 font-semibold text-on-brand transition hover:bg-brand-hover">Send quote request</Button>
-      <p className="text-xs text-muted">Demo form only. No information is sent or stored.</p>
+      <p className="text-xs text-muted">Requests are not sent or stored on this site yet.</p>
     </form>
   );
 }
